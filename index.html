@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhishGuard AI - Smart Phishing Detection</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<style>
+    body { font-family: 'Inter', sans-serif; }
+    .gradient-bg {
+        background: linear-gradient(135deg, #1a237e 0%, #0d47a1 100%);
+    }
+    .pulse {
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: .5; }
+    }
+    .slide-up {
+        animation: slideUp 0.5s ease-out;
+    }
+    @keyframes slideUp {
+        from { transform: translateY(20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+</style>
+<body class="bg-gray-50">
+    <nav class="gradient-bg text-white p-4">
+        <div class="container mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <i class="bi bi-shield-check text-2xl"></i>
+                <span class="text-xl font-bold">PhishGuard AI</span>
+            </div>
+            <div class="hidden md:flex space-x-6">
+                <a href="#" class="hover:text-blue-200">Home</a>
+                <a href="#" class="hover:text-blue-200">Documentation</a>
+                <a href="#" class="hover:text-blue-200">Browser Extension</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 py-8">
+        <div class="text-center mb-12">
+            <h1 class="text-4xl font-bold mb-4">Detect Phishing URLs Instantly</h1>
+            <p class="text-gray-600 max-w-2xl mx-auto">
+                Our advanced AI-powered system analyzes URLs in real-time to protect you from phishing attacks.
+            </p>
+        </div>
+
+        <div class="max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-6 mb-8">
+            <div class="flex flex-col md:flex-row gap-4">
+                <input type="url" id="urlInput" 
+                    class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Enter URL to analyze (e.g., https://example.com)">
+                <button onclick="analyzeURL()" 
+                    class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                    Analyze URL
+                </button>
+            </div>
+
+            <div id="results" class="hidden mt-8 slide-up">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-xl font-semibold">Analysis Results</h2>
+                    <div id="riskBadge" class="px-4 py-1 rounded-full text-white font-medium"></div>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h3 class="font-semibold mb-3">Security Score</h3>
+                        <div class="flex items-center space-x-4">
+                            <div id="scoreCircle" class="w-20 h-20 rounded-full flex items-center justify-center text-white font-bold text-xl"></div>
+                            <div id="scoreText" class="text-lg"></div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h3 class="font-semibold mb-3">Domain Information</h3>
+                        <div id="domainInfo" class="space-y-2"></div>
+                    </div>
+                </div>
+
+                <div class="mt-6 bg-gray-50 p-4 rounded-lg">
+                    <h3 class="font-semibold mb-3">Security Checks</h3>
+                    <div id="securityChecks" class="grid md:grid-cols-2 gap-4"></div>
+                </div>
+            </div>
+
+            <div id="loading" class="hidden mt-8 text-center">
+                <div class="inline-flex items-center px-4 py-2 font-semibold leading-6 text-blue-600">
+                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Analyzing URL...
+                </div>
+            </div>
+        </div>
+
+        <div class="max-w-3xl mx-auto mt-8">
+            <h2 class="text-2xl font-bold mb-4">Recent Scans</h2>
+            <div id="history" class="bg-white rounded-xl shadow-lg overflow-hidden">
+                <!-- History items will be dynamically added here -->
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let scanHistory = [];
+
+        function analyzeURL() {
+            const urlInput = document.getElementById('urlInput').value;
+            if (!urlInput) {
+                alert('Please enter a URL');
+                return;
+            }
+
+            // Show loading state
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('results').classList.add('hidden');
+
+            // Simulate API call delay
+            setTimeout(() => {
+                const analysis = simulateAnalysis(urlInput);
+                displayResults(analysis);
+                addToHistory(urlInput, analysis);
+                
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('results').classList.remove('hidden');
+            }, 2000);
+        }
+
+        function simulateAnalysis(url) {
+            // Simulate AI analysis results
+            const score = Math.floor(Math.random() * 100);
+            const risk = score > 80 ? 'Safe' : score > 50 ? 'Suspicious' : 'High Risk';
+            const color = score > 80 ? 'bg-green-500' : score > 50 ? 'bg-yellow-500' : 'bg-red-500';
+
+            return {
+                score,
+                risk,
+                color,
+                domainAge: '2 years',
+                ssl: Math.random() > 0.5,
+                blacklisted: Math.random() > 0.7,
+                suspicious: Math.random() > 0.6,
+                malwareDetected: Math.random() > 0.8
+            };
+        }
+
+        function displayResults(analysis) {
+            // Update risk badge
+            const riskBadge = document.getElementById('riskBadge');
+            riskBadge.className = `px-4 py-1 rounded-full text-white font-medium ${analysis.color}`;
+            riskBadge.textContent = analysis.risk;
+
+            // Update score circle
+            const scoreCircle = document.getElementById('scoreCircle');
+            scoreCircle.className = `w-20 h-20 rounded-full flex items-center justify-center text-white font-bold text-xl ${analysis.color}`;
+            scoreCircle.textContent = `${analysis.score}%`;
+
+            // Update score text
+            document.getElementById('scoreText').textContent = `${analysis.risk} Risk Level`;
+
+            // Update domain info
+            document.getElementById('domainInfo').innerHTML = `
+                <p><i class="bi bi-calendar"></i> Domain Age: ${analysis.domainAge}</p>
+                <p><i class="bi bi-shield${analysis.ssl ? '-check' : '-x'}</i> SSL Certificate: ${analysis.ssl ? 'Valid' : 'Invalid'}</p>
+            `;
+
+            // Update security checks
+            document.getElementById('securityChecks').innerHTML = `
+                <div class="flex items-center space-x-2">
+                    <i class="bi bi-${analysis.blacklisted ? 'x-circle text-red-500' : 'check-circle text-green-500'}"></i>
+                    <span>Domain Blacklist Check</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <i class="bi bi-${analysis.suspicious ? 'x-circle text-red-500' : 'check-circle text-green-500'}"></i>
+                    <span>Suspicious Pattern Detection</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <i class="bi bi-${analysis.malwareDetected ? 'x-circle text-red-500' : 'check-circle text-green-500'}"></i>
+                    <span>Malware Check</span>
+                </div>
+            `;
+        }
+
+        function addToHistory(url, analysis) {
+            scanHistory.unshift({ url, analysis, timestamp: new Date() });
+            scanHistory = scanHistory.slice(0, 5); // Keep only last 5 scans
+            
+            const historyDiv = document.getElementById('history');
+            historyDiv.innerHTML = scanHistory.map(scan => `
+                <div class="border-b last:border-0 p-4 hover:bg-gray-50">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <p class="font-medium truncate">${scan.url}</p>
+                            <p class="text-sm text-gray-500">${scan.timestamp.toLocaleString()}</p>
+                        </div>
+                        <div class="ml-4">
+                            <span class="px-3 py-1 rounded-full text-sm ${scan.analysis.color} text-white">
+                                ${scan.analysis.risk}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+    </script>
+<script>document.body.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); return }, { passive: false })</script>
+	</body>
+</html>
